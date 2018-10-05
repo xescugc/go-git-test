@@ -199,23 +199,17 @@ func (c *Commit) Decode(o plumbing.EncodedObject) (err error) {
 			}
 
 			split := bytes.SplitN(line, []byte{' '}, 2)
-
-			var data []byte
-			if len(split) == 2 {
-				data = split[1]
-			}
-
 			switch string(split[0]) {
 			case "tree":
-				c.TreeHash = plumbing.NewHash(string(data))
+				c.TreeHash = plumbing.NewHash(string(split[1]))
 			case "parent":
-				c.ParentHashes = append(c.ParentHashes, plumbing.NewHash(string(data)))
+				c.ParentHashes = append(c.ParentHashes, plumbing.NewHash(string(split[1])))
 			case "author":
-				c.Author.Decode(data)
+				c.Author.Decode(split[1])
 			case "committer":
-				c.Committer.Decode(data)
+				c.Committer.Decode(split[1])
 			case headerpgp:
-				c.PGPSignature += string(data) + "\n"
+				c.PGPSignature += string(split[1]) + "\n"
 				pgpsig = true
 			}
 		} else {

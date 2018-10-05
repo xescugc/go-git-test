@@ -47,16 +47,6 @@ func NewFSObject(
 
 // Reader implements the plumbing.EncodedObject interface.
 func (o *FSObject) Reader() (io.ReadCloser, error) {
-	obj, ok := o.cache.Get(o.hash)
-	if ok {
-		reader, err := obj.Reader()
-		if err != nil {
-			return nil, err
-		}
-
-		return reader, nil
-	}
-
 	f, err := o.fs.Open(o.path)
 	if err != nil {
 		return nil, err

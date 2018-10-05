@@ -258,19 +258,6 @@ func (p *Packfile) nextObject() (plumbing.EncodedObject, error) {
 }
 
 func (p *Packfile) getObjectContent(offset int64) (io.ReadCloser, error) {
-	ref, err := p.FindHash(offset)
-	if err == nil {
-		obj, ok := p.cacheGet(ref)
-		if ok {
-			reader, err := obj.Reader()
-			if err != nil {
-				return nil, err
-			}
-
-			return reader, nil
-		}
-	}
-
 	if _, err := p.s.SeekFromStart(offset); err != nil {
 		return nil, err
 	}
@@ -319,8 +306,6 @@ func (p *Packfile) fillRegularObjectContent(obj plumbing.EncodedObject) error {
 	}
 
 	_, _, err = p.s.NextObject(w)
-	p.cachePut(obj)
-
 	return err
 }
 
@@ -409,7 +394,7 @@ func (p *Packfile) GetByType(typ plumbing.ObjectType) (storer.EncodedObjectIter,
 		plumbing.TreeObject,
 		plumbing.CommitObject,
 		plumbing.TagObject:
-		entries, err := p.EntriesByOffset()
+		entries, err := p.Entries()
 		if err != nil {
 			return nil, err
 		}

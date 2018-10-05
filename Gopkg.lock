@@ -149,7 +149,7 @@
   version = "v4.3.0"
 
 [[projects]]
-  digest = "1:336779a462e14e1802fef62517172dee311db2224f62391167f969cea6637a7d"
+  digest = "1:d4e888e99d4b99e8e6432dd2deb3ec83e10b866fddc35e853eb5ad7b9d928029"
   name = "gopkg.in/src-d/go-git.v4"
   packages = [
     ".",
@@ -194,8 +194,8 @@
     "utils/merkletrie/noder",
   ]
   pruneopts = "UT"
-  revision = "d3cec13ac0b195bfb897ed038a08b5130ab9969e"
-  version = "v4.7.0"
+  revision = "7b6c1266556f59ac436fada3fa6106d4a84f9b56"
+  version = "v4.6.0"
 
 [[projects]]
   digest = "1:78d374b493e747afa9fbb2119687e3740a7fb8d0ebabddfef0a012593aaecbb3"
@@ -209,10 +209,13 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "golang.org/x/crypto/ssh",
     "gopkg.in/src-d/go-billy.v4",
     "gopkg.in/src-d/go-billy.v4/memfs",
     "gopkg.in/src-d/go-git.v4",
     "gopkg.in/src-d/go-git.v4/plumbing/object",
+    "gopkg.in/src-d/go-git.v4/plumbing/transport",
+    "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh",
     "gopkg.in/src-d/go-git.v4/storage/memory",
   ]
   solver-name = "gps-cdcl"
