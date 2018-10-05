@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -45,7 +46,7 @@ func main() {
 
 }
 
-func getFS(url, sshCred string) (*FS, error) {
+func getFS(url, sshCred string) (FileSystem, error) {
 	auth, err := getAuth(sshCred)
 	if err != nil {
 		return nil, err
@@ -64,14 +65,19 @@ func getFS(url, sshCred string) (*FS, error) {
 		return nil, err
 	}
 
-	return &FS{
+	return &filesystem{
 		Filesystem: w.Filesystem,
 		rep:        rep,
 	}, nil
 }
 
-func saveFS(sshCred string, fs *FS) error {
-	w, err := fs.rep.Worktree()
+func saveFS(sshCred string, fs FileSystem) error {
+	fss, ok := fs.(*filesystem)
+	if !ok {
+		return errors.New("It's not a *filesystem")
+	}
+
+	w, err := fss.rep.Worktree()
 	if err != nil {
 		return nil
 	}
@@ -109,7 +115,7 @@ func saveFS(sshCred string, fs *FS) error {
 		return err
 	}
 
-	err = fs.rep.PushContext(context.TODO(), &git.PushOptions{
+	err = fss.rep.PushContext(context.TODO(), &git.PushOptions{
 		Auth: auth,
 	})
 	if err != nil {
@@ -133,12 +139,17 @@ func getAuth(sshCred string) (transport.AuthMethod, error) {
 	return auth, nil
 }
 
-type FS struct {
+type FileSystem interface {
+	billy.Filesystem
+	WriteFile(p, d string) error
+}
+
+type filesystem struct {
 	billy.Filesystem
 	rep *git.Repository
 }
 
-func (fs *FS) WriteFile(p, d string) error {
+func (fs *filesystem) WriteFile(p, d string) error {
 	f, err := fs.Create(p)
 	if err != nil {
 		return err
