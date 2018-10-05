@@ -24,13 +24,16 @@ func main() {
 	url := os.Args[1]
 	sshCred := os.Getenv("SSH_CRED")
 
+	name := time.Now().UnixNano()
+
+	err := createFirstFile(url, sshCred, name)
+	checkError(err)
+
 	fs, err := getFS(url, sshCred)
 	checkError(err)
 
-	name := time.Now().UnixNano()
-
 	p1 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "fiel1.txt")
-	err = fs.WriteFile(p1, "some data")
+	err = fs.WriteFile(p1, "some updated data")
 	checkError(err)
 
 	p2 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "somedir", "file2.txt")
@@ -44,6 +47,26 @@ func main() {
 	err = saveFS(sshCred, fs)
 	checkError(err)
 
+}
+
+func createFirstFile(url, sshCred string, name int64) error {
+	fs, err := getFS(url, sshCred)
+	if err != nil {
+		return err
+	}
+
+	p1 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "fiel1.txt")
+	err = fs.WriteFile(p1, "some data")
+	if err != nil {
+		return err
+	}
+
+	err = saveFS(sshCred, fs)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getFS(url, sshCred string) (FileSystem, error) {
@@ -98,6 +121,7 @@ func saveFS(sshCred string, fs FileSystem) error {
 		return err
 	}
 	fmt.Println(s)
+	fmt.Println("--")
 
 	_, err = w.Commit("Automatic commit", &git.CommitOptions{
 		All: true,
