@@ -13,6 +13,7 @@ import (
 	"gopkg.in/src-d/go-billy.v4/memfs"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	gitSSH "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"gopkg.in/src-d/go-git.v4/storage/memory"
 )
@@ -22,52 +23,74 @@ func main() {
 	url := os.Args[1]
 	sshCred := os.Getenv("SSH_CRED")
 
-	signer, err := ssh.ParsePrivateKey([]byte(sshCred))
+	fs, err := getFS(url, sshCred)
 	checkError(err)
 
-	auth := &gitSSH.PublicKeys{
-		User:   "git",
-		Signer: signer,
+	name := time.Now().UnixNano()
+
+	p1 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "fiel1.txt")
+	err = fs.WriteFile(p1, "some data")
+	checkError(err)
+
+	p2 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "somedir", "file2.txt")
+	err = fs.WriteFile(p2, "some data 2")
+	checkError(err)
+
+	p3 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "somedir", "anotherdir", "file3.txt")
+	err = fs.WriteFile(p3, "some data 3")
+	checkError(err)
+
+	err = saveFS(sshCred, fs)
+	checkError(err)
+
+}
+
+func getFS(url, sshCred string) (*FS, error) {
+	auth, err := getAuth(sshCred)
+	if err != nil {
+		return nil, err
 	}
 
 	rep, err := git.CloneContext(context.TODO(), memory.NewStorage(), memfs.New(), &git.CloneOptions{
 		URL:  url,
 		Auth: auth,
 	})
-	checkError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	w, err := rep.Worktree()
-	checkError(err)
+	if err != nil {
+		return nil, err
+	}
 
-	fs := w.Filesystem
+	return &FS{
+		Filesystem: w.Filesystem,
+		rep:        rep,
+	}, nil
+}
 
-	name := time.Now().UnixNano()
-
-	p1 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "fiel1.txt")
-	err = writeFile(fs, p1, "some data")
-	checkError(err)
-
-	p2 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "somedir", "file2.txt")
-	err = writeFile(fs, p2, "some data 2")
-	checkError(err)
-
-	p3 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "somedir", "anotherdir", "file3.txt")
-	err = writeFile(fs, p3, "some data 3")
-	checkError(err)
-
-	// Redundant but on the code I do it
-	w, err = rep.Worktree()
-	checkError(err)
+func saveFS(sshCred string, fs *FS) error {
+	w, err := fs.rep.Worktree()
+	if err != nil {
+		return nil
+	}
 
 	s, err := w.Status()
-	checkError(err)
+	if err != nil {
+		return nil
+	}
 	fmt.Println(s)
 
 	err = w.AddGlob(".")
-	checkError(err)
+	if err != nil {
+		return nil
+	}
 
 	s, err = w.Status()
-	checkError(err)
+	if err != nil {
+		return nil
+	}
 	fmt.Println(s)
 
 	_, err = w.Commit("Automatic commit", &git.CommitOptions{
@@ -77,14 +100,45 @@ func main() {
 			When: time.Now(),
 		},
 	})
+	if err != nil {
+		return nil
+	}
 
-	err = rep.PushContext(context.TODO(), &git.PushOptions{
+	auth, err := getAuth(sshCred)
+	if err != nil {
+		return err
+	}
+
+	err = fs.rep.PushContext(context.TODO(), &git.PushOptions{
 		Auth: auth,
 	})
-	checkError(err)
+	if err != nil {
+		return nil
+	}
+
+	return nil
 }
 
-func writeFile(fs billy.Filesystem, p, d string) error {
+func getAuth(sshCred string) (transport.AuthMethod, error) {
+	signer, err := ssh.ParsePrivateKey([]byte(sshCred))
+	if err != nil {
+		return nil, err
+	}
+
+	auth := &gitSSH.PublicKeys{
+		User:   "git",
+		Signer: signer,
+	}
+
+	return auth, nil
+}
+
+type FS struct {
+	billy.Filesystem
+	rep *git.Repository
+}
+
+func (fs *FS) WriteFile(p, d string) error {
 	f, err := fs.Create(p)
 	if err != nil {
 		return err
