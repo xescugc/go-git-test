@@ -43,15 +43,15 @@ func main() {
 
 	name := time.Now().UnixNano()
 
-	p1 := path.Join(fmt.Sprintf("dir-%d", name), "fiel1.txt")
+	p1 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "fiel1.txt")
 	err = writeFile(fs, p1, "some data")
 	checkError(err)
 
-	p2 := path.Join(fmt.Sprintf("dir-%d", name), "somedir", "file2.txt")
+	p2 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "somedir", "file2.txt")
 	err = writeFile(fs, p2, "some data 2")
 	checkError(err)
 
-	p3 := path.Join(fmt.Sprintf("dir-%d", name), "somedir", "anotherdir", "file3.txt")
+	p3 := path.Join("test-dirs", fmt.Sprintf("dir-%d", name), "somedir", "anotherdir", "file3.txt")
 	err = writeFile(fs, p3, "some data 3")
 	checkError(err)
 
