@@ -136,6 +136,8 @@ func getAuth(sshCred string) (transport.AuthMethod, error) {
 		Signer: signer,
 	}
 
+	auth.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+
 	return auth, nil
 }
 
