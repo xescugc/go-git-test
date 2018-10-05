@@ -79,23 +79,23 @@ func saveFS(sshCred string, fs FileSystem) error {
 
 	w, err := fss.rep.Worktree()
 	if err != nil {
-		return nil
+		return err
 	}
 
 	s, err := w.Status()
 	if err != nil {
-		return nil
+		return err
 	}
 	fmt.Println(s)
 
 	err = w.AddGlob(".")
 	if err != nil {
-		return nil
+		return err
 	}
 
 	s, err = w.Status()
 	if err != nil {
-		return nil
+		return err
 	}
 	fmt.Println(s)
 
@@ -107,7 +107,7 @@ func saveFS(sshCred string, fs FileSystem) error {
 		},
 	})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	auth, err := getAuth(sshCred)
@@ -119,7 +119,7 @@ func saveFS(sshCred string, fs FileSystem) error {
 		Auth: auth,
 	})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return nil
